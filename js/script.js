@@ -58,7 +58,7 @@ let player2;
 let keys = {};
 let speed = 4.5;
 let dir_x = 1;
-let dir_y = Math.random() - 0.5;
+let dir_y = (function () { return ((Math.random() * 2.0) - 1.0); })();
 
 let count = 0;
 
@@ -115,10 +115,9 @@ function moveBall() {
 		// count++;
 		checkCollisionWall();
 		checkCollisionPlayer();
-		ball.x += (dir_x * (1 * speed));
-		ball.y += (dir_y * (1 * speed));
-		console.log("X: " + ball.x + " Y: " + ball.y);
-		moveBallY();
+		ball.x += (dir_x * speed);
+		ball.y += (dir_y * speed);
+		// console.log("X: " + ball.x + " Y: " + ball.y);
 	}
 }
 
@@ -129,7 +128,7 @@ function checkCollisionWall () {
 	}
 	else if ((ball.y + 16) >= (margin * 6)) {
 		dir_y = Math.abs(dir_y) * -1;
-		console.log("New value: " + (Math.abs(dir_y * 100) / 100) + " " + (Math.abs(dir_y * 100) / -100));
+		// console.log("New value: " + (Math.abs(dir_y * 100) / 100) + " " + (Math.abs(dir_y * 100) / -100));
 		// speed += 1.25;
 	}
 }
@@ -149,10 +148,6 @@ function checkGoal(){
 	if ((ball.x - 16) < player1.x - 21 || (ball.x + 16) > player2.x + 21)
 		return true;
 	return (false);
-}
-
-function moveBallY(){
-	
 }
 
 async function setup () {
