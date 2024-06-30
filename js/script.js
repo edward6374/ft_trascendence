@@ -48,80 +48,27 @@
 // import { Application, Assets, Container, Sprite } from './pixi.min.js';
 // import * as PIXI from "./pixi.min.js";
 
-const dir = {x:1, y:1};
 let app;
+let ball;
+let rect;
+let margin;
+let circle;
 let player1;
 let player2;
 let keys = {};
-let margin;
-const speed = {x:5, y:3, o_x:2, o_y:1};
-let ball;
+let speed = 4.5;
+let dir_x = 1;
+let dir_y = Math.random() - 0.5;
 
-(async () => {
-	// Create a new application
+let count = 0;
 
-	app = new PIXI.Application();
-
-	// Initialize the application
-	await app.init({ background: '#aaaaaa', resizeTo: window });
-
-	// Append the application canvas to the document body
-	document.body.appendChild(app.canvas);
-
-	const container = new PIXI.Container();
-
-	margin = app.view.height / 4;
-	const top = new PIXI.Graphics().rect(0, 0, app.view.width, margin).fill({ color: 0x0 });
-	const bottom = new PIXI.Graphics().rect(0, margin * 3, app.view.width, margin).fill({ color: 0x0 });
-
-	container.x = 0;
-	container.y = margin;
-
-	let rect_blue = await PIXI.Assets.load("images/rect.png");
-	let	rect_red = await PIXI.Assets.load("images/payer2.png");
-	player1 = new PIXI.Sprite(rect_blue);
-	player1.anchor.set(0.5);
-	player1.x = app.view.width / 9;
-	player1.y = (app.view.height - (margin * 2)) / 2;
-	player1.height = 80;
-	player2 = new PIXI.Sprite(rect_red);
-	player2.anchor.set(0.5);
-	player2.x = app.view.width / 9 * 8;
-	player2.y = (app.view.height - (margin * 2)) / 2;
-	player2.height = 80;
-
-	let circle = await PIXI.Assets.load("images/ball-1.png.png");
-	ball = new PIXI.Sprite(circle);
-	ball.anchor.set(0.5);
-	ball.x = app.view.width / 2;
-	ball.y = (app.view.height - (margin * 2)) / 2;
-
-	container.addChild(player1);
-	container.addChild(player2);
-	container.addChild(ball);
-
-	app.stage.addChild(top);
-	app.stage.addChild(bottom);
-	app.stage.addChild(container);
-	// app.stage.addChild(player1);
-	// app.stage.addChild(player2);
-
-	window.addEventListener("keyup", keyUp);
-	window.addEventListener("keydown", keyDown);
-	window.addEventListener("resize", resizeGame);
-
-	app.ticker.add(gameLoop);
-	// app.stage.interactive = true;
-	// app.stage.on("pointermove", movePlayer);
-	})();
-	
 function keyUp (e) {
-	console.log(e.keyCode);
+	// console.log(e.keyCode);
 	keys[e.keyCode] = false;
 }		
 
 function keyDown (e) {
-	console.log(e.keyCode);
+	// console.log(e.keyCode);
 	keys[e.keyCode] = true;
 }
 
@@ -150,76 +97,121 @@ function gameLoop () {
 	moveBall();
 	let yCheck1Min = player1.y - (player1.height / 2) - 5 < 0;
 	let yCheck2Min = player2.y - (player2.height / 2) - 5 < 0;
-	let yCheck1Max = player1.y + (player1.height / 2) + 5 >= margin * 2;
-	let yCheck2Max = player2.y + (player2.height / 2) + 5 >= margin * 2;
+	let yCheck1Max = player1.y + (player1.height / 2) + 5 >= margin * 6;
+	let yCheck2Max = player2.y + (player2.height / 2) + 5 >= margin * 6;
 	if (keys["87"] && !yCheck1Min)
-		player1.y -= 5;
+		player1.y -= 4;
 	if (keys["83"] && !yCheck1Max)
-		player1.y += 5;
+		player1.y += 4;
 	if (keys["38"] && !yCheck2Min)
-		player2.y -= 5;
+		player2.y -= 4;
 	if (keys["40"] && !yCheck2Max)
-		player2.y += 5;
+		player2.y += 4;
 }
 
 function moveBall() {
 	if (!checkGoal())
 	{
+		// count++;
+		checkCollisionWall();
 		checkCollisionPlayer();
-		ball.x += (dir.x * speed.x);
+		ball.x += (dir_x * (1 * speed));
+		ball.y += (dir_y * (1 * speed));
+		console.log("X: " + ball.x + " Y: " + ball.y);
 		moveBallY();
 	}
 }
 
-function checkCollisionPlayer() {
-	let player1_U_Limit = player1.y + (player1.height / 2);
-	let player1_D_Limit = player1.y - (player1.height / 2);
-	let player2_U_Limit = player2.y + (player2.height / 2);
-	let player2_D_Limit = player2.y - (player2.height / 2);
+function checkCollisionWall () {
+	if ((ball.y - 16) <= 0) {
+		dir_y = Math.abs(dir_y);
+		// speed += 1.25;
+	}
+	else if ((ball.y + 16) >= (margin * 6)) {
+		dir_y = Math.abs(dir_y) * -1;
+		console.log("New value: " + (Math.abs(dir_y * 100) / 100) + " " + (Math.abs(dir_y * 100) / -100));
+		// speed += 1.25;
+	}
+}
 
-	if (ball.x <= (player1.x + 16) && ball.y >= player1.y - 5 && ball.y <= player1.y + 5)
-	{
-		dir.x = 1;
-		speed.x *= 0.75;
-		speed.y *= 0.75;
+function checkCollisionPlayer() {
+	if (ball.x <= (player1.x + 16) && (ball.y <= player1.y + (player1.height / 2) && ball.y >= player1.y - (player1.height / 2))) {
+		dir_x = 1;
+	// speed += 1.25;
 	}
-	else if (ball.x <= (player1.x + 16) && (ball.y <= player1_U_Limit && ball.y >= player1_D_Limit))
-	{
-		dir.x = 1;
-		speed.x += 0.25;
-	}
-	if (ball.x >= (player2.x - 16) && ball.y >= player2.y - 5 && ball.y <= player2.y + 5)
-	{
-		dir.x = -1;
-		speed.x *= 0.75;
-		speed.y *= 0.75;
-	}
-	else if (ball.x >= (player2.x - 16) && (ball.y <= player2_U_Limit && ball.y >= player2_D_Limit))
-	{
-		dir.x = -1;
-		speed.x += 0.25;
+	else if (ball.x >= (player2.x - 16) && (ball.y <= player2.y + (player2.height / 2) && ball.y >= player2.y - (player2.height / 2))) {
+		dir_x = -1;
+		// speed += 1.25;
 	}
 }
 
 function checkGoal(){
-	if (ball.x < (player1.x - 16) || ball.x > (player2.x + 16))
+	if ((ball.x - 16) < player1.x - 21 || (ball.x + 16) > player2.x + 21)
 		return true;
 	return (false);
 }
 
 function moveBallY(){
-	let yCheckMax = ball.y + (ball.height / 2);
-	let yCheckMin = ball.y - (ball.height / 2);
-
-	ball.y += (dir.y * speed.y);
-	if (yCheckMax >= margin * 2)
-	{
-		dir.y = -1;
-		speed.y += 0.05;
-	}
-	else if (yCheckMin <= 0)
-	{
-		dir.y = 1;
-		speed.y += 0.05;
-	}
+	
 }
+
+async function setup () {
+	// Create a new application
+
+	app = new PIXI.Application();
+
+	// Initialize the application
+	await app.init({ background: '#aaaaaa', resizeTo: window });
+	// Append the application canvas to the document body
+	document.body.appendChild(app.canvas);
+	rect = await PIXI.Assets.load("images/rect.png");
+	circle = await PIXI.Assets.load("images/ball.png");
+};
+
+function main () {
+	const container = new PIXI.Container();
+
+	margin = app.view.height / 8;
+	const top = new PIXI.Graphics().rect(0, 0, app.view.width, margin).fill({ color: 0x333FFF });
+	const left = new PIXI.Graphics().rect(0, margin, app.view.width / 4 - 15, margin * 6).fill({ color: 0x333FFF });
+	const right = new PIXI.Graphics().rect((app.view.width / 4 * 3) + 15, margin, app.view.width / 4, margin * 6).fill({ color: 0x333FFF });
+	const bottom = new PIXI.Graphics().rect(0, margin * 7, app.view.width, margin).fill({ color: 0x333FFF });
+
+	container.x = 0;
+	container.y = margin;
+
+	player1 = new PIXI.Sprite(rect);
+	player1.anchor.set(0.5);
+	player1.x = app.view.width / 4;
+	player1.y = (app.view.height - (margin * 2)) / 2;
+	player1.height = 80;
+	player2 = new PIXI.Sprite(rect);
+	player2.anchor.set(0.5);
+	player2.x = app.view.width / 4 * 3;
+	player2.y = (app.view.height - (margin * 2)) / 2;
+	player2.height = 80;
+	ball = new PIXI.Sprite(circle);
+	ball.anchor.set(0.5);
+	ball.x = app.view.width / 2;
+	ball.y = (app.view.height - (margin * 2)) / 2;
+
+	container.addChild(player1);
+	container.addChild(player2);
+	container.addChild(ball);
+
+	window.addEventListener("keyup", keyUp);
+	window.addEventListener("keydown", keyDown);
+	window.addEventListener("resize", resizeGame);
+	app.stage.addChild(top);
+	app.stage.addChild(left);
+	app.stage.addChild(right);
+	app.stage.addChild(bottom);
+	app.stage.addChild(container);
+
+	app.ticker.add(gameLoop);
+	// app.stage.interactive = true;
+	// app.stage.on("pointermove", movePlayer);
+}
+
+await setup();
+main();
