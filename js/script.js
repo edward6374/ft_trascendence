@@ -50,15 +50,19 @@
 
 let app;
 let ball;
-let rect;
+// let circle;
+// let rectOne;
+// let rectTwo;
 let margin;
-let circle;
 let player1;
 let player2;
 let keys = {};
-let speed = 4.5;
-let dir_x = 1;
-let dir_y = (function () { return ((Math.random() * 2.0) - 1.0); })();
+// let speed = 4.5;
+// let dir_x = 1;
+// let dir_y = (function () { return ((Math.random() * 2.0) - 1.0); })();
+let assets = { circle: null, rectOne: null, rectTwo: null };
+const dir = { x: 1, y: (function () { return ((Math.random() * 2.0) - 1.0); })() };
+const speed = { x: 5, y: 3 };
 
 let count = 0;
 
@@ -112,42 +116,63 @@ function gameLoop () {
 function moveBall() {
 	if (!checkGoal())
 	{
-		// count++;
-		checkCollisionWall();
 		checkCollisionPlayer();
-		ball.x += (dir_x * speed);
-		ball.y += (dir_y * speed);
+		ball.x += (dir.x * speed.x);
+		moveBallY();
+		// ball.y += (dir_y * speed);
 		// console.log("X: " + ball.x + " Y: " + ball.y);
 	}
 }
 
-function checkCollisionWall () {
-	if ((ball.y - 16) <= 0) {
-		dir_y = Math.abs(dir_y);
-		// speed += 1.25;
-	}
-	else if ((ball.y + 16) >= (margin * 6)) {
-		dir_y = Math.abs(dir_y) * -1;
-		// console.log("New value: " + (Math.abs(dir_y * 100) / 100) + " " + (Math.abs(dir_y * 100) / -100));
-		// speed += 1.25;
-	}
-}
+function checkCollisionPlayer () {
+	let player1_U_Limit = player1.y + (player1.height / 2);
+	let player1_D_Limit = player1.y - (player1.height / 2);
+	let player2_U_Limit = player2.y + (player2.height / 2);
+	let player2_D_Limit = player2.y - (player2.height / 2);
 
-function checkCollisionPlayer() {
-	if (ball.x <= (player1.x + 16) && (ball.y <= player1.y + (player1.height / 2) && ball.y >= player1.y - (player1.height / 2))) {
-		dir_x = 1;
-	// speed += 1.25;
+	if (ball.x <= (player1.x + 16) && ball.y >= player1.y - 5 && ball.y <= player1.y + 5) {
+		dir.x = 1;
+		speed.x *= 0.75;
+		speed.y *= 0.75;
 	}
-	else if (ball.x >= (player2.x - 16) && (ball.y <= player2.y + (player2.height / 2) && ball.y >= player2.y - (player2.height / 2))) {
-		dir_x = -1;
-		// speed += 1.25;
+	else if (ball.x <= (player1.x + 16) && (ball.y <= player1_U_Limit && ball.y >= player1_D_Limit)) {
+		dir.x = 1;
+		speed.x += 0.25;
+	}
+	if (ball.x >= (player2.x - 16) && ball.y >= player2.y - 5 && ball.y <= player2.y + 5) {
+		dir.x = -1;
+		speed.x *= 0.75;
+		speed.y *= 0.75;
+	}
+	else if (ball.x >= (player2.x - 16) && (ball.y <= player2_U_Limit && ball.y >= player2_D_Limit)) {
+		dir.x = -1;
+		speed.x += 0.25;
 	}
 }
 
 function checkGoal(){
-	if ((ball.x - 16) < player1.x - 21 || (ball.x + 16) > player2.x + 21)
+	if ((ball.x - 16) < (player1.x - 20) || (ball.x + 16) > (player2.x + 20))
 		return true;
 	return (false);
+}
+
+function moveBallY () {
+	let yCheckMax = ball.y + (ball.height / 2);
+	let yCheckMin = ball.y - (ball.height / 2);
+
+	ball.y += (dir.y * speed.y);
+	if (yCheckMax >= margin * 6) {
+		if (dir.y > 0)
+			dir.y = dir.y * -1;
+		// dir.y = -1;
+		speed.y += 0.05;
+	}
+	else if (yCheckMin <= 0) {
+		if (dir.y < 0)
+			dir.y = dir.y * -1;
+		// dir.y = 1;
+		speed.y += 0.05;
+	}
 }
 
 async function setup () {
@@ -159,8 +184,9 @@ async function setup () {
 	await app.init({ background: '#aaaaaa', resizeTo: window });
 	// Append the application canvas to the document body
 	document.body.appendChild(app.canvas);
-	rect = await PIXI.Assets.load("images/rect.png");
-	circle = await PIXI.Assets.load("images/ball.png");
+	assets.circle = await PIXI.Assets.load("images/ball.png");
+	assets.rectOne = await PIXI.Assets.load("images/rect_one.png");
+	assets.rectTwo = await PIXI.Assets.load("images/rect_two.png");
 };
 
 function main () {
@@ -175,17 +201,17 @@ function main () {
 	container.x = 0;
 	container.y = margin;
 
-	player1 = new PIXI.Sprite(rect);
+	player1 = new PIXI.Sprite(assets.rectOne);
 	player1.anchor.set(0.5);
 	player1.x = app.view.width / 4;
 	player1.y = (app.view.height - (margin * 2)) / 2;
 	player1.height = 80;
-	player2 = new PIXI.Sprite(rect);
+	player2 = new PIXI.Sprite(assets.rectTwo);
 	player2.anchor.set(0.5);
 	player2.x = app.view.width / 4 * 3;
 	player2.y = (app.view.height - (margin * 2)) / 2;
 	player2.height = 80;
-	ball = new PIXI.Sprite(circle);
+	ball = new PIXI.Sprite(assets.circle);
 	ball.anchor.set(0.5);
 	ball.x = app.view.width / 2;
 	ball.y = (app.view.height - (margin * 2)) / 2;
